@@ -38,3 +38,6 @@ java -jar Objective-JNI-1.0-SNAPSHOT.jar --output ./generated --prefix AS --clas
 ```
 
 It's recommended to use OpenJDK 1.7.
+
+# Objective-JNI-Annotations
+You can find more here: https://github.com/ashitikov/Objective-JNI/tree/master/Objective-JNI-Annotations
