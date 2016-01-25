@@ -37,7 +37,7 @@ Example:
 java -jar Objective-JNI-1.0-SNAPSHOT.jar --output ./generated --prefix AS --classpath ./some-java-code.jar --class java.lang.Integer
 ```
 
-It's recommended to use OpenJDK 1.7.
+**It's recommended to use OpenJDK 1.7.**
 
 ## Wrapper generation
 Each java class from classpath (--classpath option) or concrete one that you specified explicitly in --class option will be generated Objective-C wrapper, except private classes. Classes and interface inheritance will be saved. 
@@ -143,6 +143,7 @@ You can use @OJNIExportName annotation to change name and @OJNIExclude to exclud
 
 ## Arrays
 There is two types of arrays:
+
 1. Primitive (int[], float[] ...)
 2. Object (String[], Object[] ...)
 
@@ -207,5 +208,36 @@ Translated:
 - (NSArray <NSArray <String *> *> *)getGivenArray(NSArray <NSArray <String *> *> *)array;
 ```
 
+## Exceptions
+There is 2 types of exceptions:
+
+1. Environment exception (OJNIEnvironmentException *)
+2. Java exception (OJNIJavaException *)
+
+Environment exception occures when input or output data cannot be handles properly. For example if you are trying to pass invalid object, or method/field not found in java class.
+
+Java exception occures when java method throws it. You can catch it as usual objective-c way:
+Java example:
+```java
+public String[] getGivenArray(String[] array) throws NullPointerException {
+   throw new NullPointerException("Test exception");
+   return array;
+}
+```
+Translated Objective-C:
+```objectivec
+- (NSArray <String *> *)getGivenArray(NSArray <String *> *)array;
+
+// using 
+@try {
+   [SomeClass getGivenArray:@[[String stringWithNSString:@"Test"]];
+} @catch (OJNIJavaException *je) {
+   NSLog(@"Got a java exception %@", je);
+} @catch (OJNIEnvironmentException *ee) {
+   NSLog(@"Got an environment exception %@", ee);
+} @finally {
+   NSLog(@"Finally");
+}
+```
 # Objective-JNI-Annotations
 You can find more here: https://github.com/ashitikov/Objective-JNI/tree/master/Objective-JNI-Annotations
