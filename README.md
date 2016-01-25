@@ -239,5 +239,15 @@ Translated Objective-C:
    NSLog(@"Finally");
 }
 ```
+
+# Memory Management
+While Objective-C wrapper object is live, java object is also live. So there is two cases that we need to review:
+
+1. Object created by calling a constructor. In such case, JNI creates new global reference, and hold it until dealloc() in Objective-C wrapper not called.
+2. Object returned from method. If found the same already created Objective-C wrapper object, then nothing happens, else one creates.
+
+**NOTICE:**
+Be careful using java singletones. Because of wrapper does not contain any information about static objects, each time you'll call [SomeClass instance] you will get new wrapper object, until you will not store the reference to it, although java object will be the same.
+
 # Objective-JNI-Annotations
 You can find more here: https://github.com/ashitikov/Objective-JNI/tree/master/Objective-JNI-Annotations
