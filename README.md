@@ -138,15 +138,74 @@ Objective-C translated:
 - (instancetype)initWithaString:(String *)a;
 @end
 ```
+Private methods will be ignored.
+You can use @OJNIExportName annotation to change name and @OJNIExclude to exclude it from wrapper.
 
 ## Arrays
 There is two types of arrays:
 1. Primitive (int[], float[] ...)
 2. Object (String[], Object[] ...)
 
+#### Primitive array
+All primitive arrays like int[], float[] and etc. translates to OJNIPrimitive##Type##Array, where ##Type## is Int, Float and etc. 
+Java example:
+```java
+public int[] getGivenArray(int[] array) {
+   return array;
+}
+```
+Translated Objective-C:
+```objectivec
+- (OJNIPrimitiveIntArray *)getGivenArray(OJNIPrimitiveIntArray *)array;
+```
+**OJNIPrimitiveArray classes uses standard C arrays, right like NSData * class.**
 
-Private methods will be ignored.
-You can use @OJNIExportName annotation to change name and @OJNIExclude to exclude it from wrapper.
+Multidimensional example:
+```java
+public int[][] getGivenArray(int[][] array) {
+   return array;
+}
+```
+Translated:
+```objectivec
+- (NSArray <OJNIPrimitiveIntArray *> *)getGivenArray(NSArray <OJNIPrimitiveIntArray *> *)array;
+```
+For the comfort, there is a helper methods to create OJNIPrimitiveArray without C arrays like:
+```objectivec
+- (instancetype)initWithNumberArray:(NSArray <NSNumber *> *)numberArray;
++ (instancetype)arrayWithNumberArray:(NSArray <NSNumber *> *)numberArray;
+
+//using
+OJNIPrimitiveIntArray * array = [OJNIPrimitiveIntArray arrayWithNumberArray:@[@(1), @(2), @(3)]];
+NSArray <OJNIPrimitiveIntArray *> *result = [SomeClass getGivenArray:@[array]];
+for (int i = 0; i < result.count; i++) {
+   int stored = [result[i] intAtIndex:i];
+   // do smth with stored.
+}
+```
+
+#### Object array
+All object arrays like String[], Object[] and etc. translates to NSArray <##ObjectType##> *, where ##ObjectType## is object class.
+Java example:
+```java
+public String[] getGivenArray(String[] array) {
+   return array;
+}
+```
+Translated Objective-C:
+```objectivec
+- (NSArray <String *> *)getGivenArray(NSArray <String *> *)array;
+```
+Multidimensional example:
+```java
+public String[][] getGivenArray(String[][] array) {
+   return array;
+}
+```
+Translated:
+```objectivec
+- (NSArray <NSArray <String *> *> *)getGivenArray(NSArray <NSArray <String *> *> *)array;
+```
 
 # Objective-JNI-Annotations
 You can find more here: https://github.com/ashitikov/Objective-JNI/tree/master/Objective-JNI-Annotations
