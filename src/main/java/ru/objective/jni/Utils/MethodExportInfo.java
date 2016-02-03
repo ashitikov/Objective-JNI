@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package ru.objective.jni.Utils;
+package ru.objective.jni.utils;
 
 /**
  * Created by ashitikov on 13.01.16.
@@ -23,6 +23,5 @@ public class MethodExportInfo {
     public String name = null;
     public boolean isCustom;
 
-    public MethodExportInfo() {
-    }
+    public MethodExportInfo() {}
 }

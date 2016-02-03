@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package ru.objective.jni.Utils;
+package ru.objective.jni.utils;
 
 /**
  * Created by ashitikov on 18.01.16.

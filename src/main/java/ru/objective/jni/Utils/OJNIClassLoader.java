@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package ru.objective.jni.Utils;
+package ru.objective.jni.utils;
 
 import org.apache.commons.bcel6.classfile.JavaClass;
 import org.apache.commons.bcel6.util.ClassPath;

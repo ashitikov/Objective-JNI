@@ -17,9 +17,9 @@
 package ru.objective.jni.tasks;
 
 import org.apache.commons.bcel6.classfile.JavaClass;
-import ru.objective.jni.Utils.OJNIClassLoader;
-import ru.objective.jni.Utils.ResourceList;
-import ru.objective.jni.Utils.Utils;
+import ru.objective.jni.utils.OJNIClassLoader;
+import ru.objective.jni.utils.ResourceList;
+import ru.objective.jni.utils.Utils;
 import ru.objective.jni.constants.Constants;
 import ru.objective.jni.tasks.builders.AbstractBuilder;
 import ru.objective.jni.tasks.builders.ClassBuilder;
@@ -43,20 +43,21 @@ public class DefaultTask implements ITask {
     private String[] excludes;
     private String[] classes;
     private String[] packages;
+    private String[] excludedPackages;
 
     private String output;
     private String prefix;
 
-    private HashSet<String> globalDependencies = new HashSet<>();
     private ArrayList<String> generatedClasses = new ArrayList<>();
 
-    public DefaultTask(String[] classPaths, String[] excludes, String[] classes, String[] packages, String output, String prefix) {
+    public DefaultTask(String[] classPaths, String[] excludes, String[] excludedPackages, String[] classes, String[] packages, String output, String prefix) {
         this.classPaths = classPaths;
         this.excludes = excludes;
         this.classes = classes;
         this.packages = packages;
         this.output = output;
         this.prefix = prefix;
+        this.excludedPackages = excludedPackages;
     }
 
     @Override
@@ -74,10 +75,10 @@ public class DefaultTask implements ITask {
         AbstractBuilder builder = null;
 
         if (parsedClass.isInterface()) {
-            builder = new InterfaceBuilder(parsedClass, prefix, excludes);
+            builder = new InterfaceBuilder(parsedClass, prefix, excludes, excludedPackages);
         }
         else {
-            builder = new ClassBuilder(parsedClass, prefix, excludes);
+            builder = new ClassBuilder(parsedClass, prefix, excludes, excludedPackages);
         }
 
         JavaClass[] interfaces = builder.getInterfaces();
@@ -147,7 +148,7 @@ public class DefaultTask implements ITask {
 
             JarFile jarFile = new JarFile(classPath);
 
-            String[] containedClasses = Utils.getContainedExportClasses(jarFile, excludes);
+            String[] containedClasses = Utils.getContainedExportClasses(jarFile, excludes, excludedPackages);
 
             for (String entry : containedClasses) {
                 parseClass(entry);

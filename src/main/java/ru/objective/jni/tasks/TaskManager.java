@@ -17,8 +17,8 @@
 package ru.objective.jni.tasks;
 
 import org.apache.commons.cli.CommandLine;
-import ru.objective.jni.Utils.OJNIClassLoader;
-import ru.objective.jni.Utils.Utils;
+import ru.objective.jni.utils.OJNIClassLoader;
+import ru.objective.jni.utils.Utils;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -34,7 +34,7 @@ public class TaskManager {
     public void run(CommandLine cmd) throws Exception {
         String[] classPaths = cmd.getOptionValues("classpath");
         String[] excludes = cmd.getOptionValues("exclude");
-        String[] excludesPackages = cmd.getOptionValues("exclude-package");
+        String[] excludesPackages = cmd.getOptionValues("excludepackage");
         String[] classes = cmd.getOptionValues("class");
         String[] packages = cmd.getOptionValues("package");
 
@@ -50,25 +50,9 @@ public class TaskManager {
         } else {
             OJNIClassLoader.getInstance().setClassPaths(Utils.classPathsFromStrings(classPaths));
 
-            String[] resultExcludes = Utils.mergeUniqueArray(excludes, getExcludesFromPackages(excludesPackages));
-
-            task = new DefaultTask(classPaths, resultExcludes, classes, packages, output, prefix);
+            task = new DefaultTask(classPaths, excludes, excludesPackages, classes, packages, output, prefix);
         }
 
         task.run();
     }
-
-    private String[] getExcludesFromPackages(String[] packages) throws IOException {
-        if (packages == null)
-            return null;
-
-        HashSet<String> result = new HashSet<>();
-
-        for (String pkg : packages) {
-            result.addAll(OJNIClassLoader.getInstance().getClassNamesSetFromPackage(pkg));
-        }
-
-        return result.toArray(new String[result.size()]);
-    }
-
 }

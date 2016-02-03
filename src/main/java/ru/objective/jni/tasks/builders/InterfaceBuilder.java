@@ -18,9 +18,9 @@ package ru.objective.jni.tasks.builders;
 
 import org.apache.commons.bcel6.classfile.JavaClass;
 import org.apache.commons.bcel6.classfile.Method;
-import ru.objective.jni.Utils.MethodExportInfo;
-import ru.objective.jni.Utils.ResourceList;
-import ru.objective.jni.Utils.Utils;
+import ru.objective.jni.utils.MethodExportInfo;
+import ru.objective.jni.utils.ResourceList;
+import ru.objective.jni.utils.Utils;
 import ru.objective.jni.constants.Constants;
 import ru.objective.jni.exceptions.BadParsingException;
 
@@ -36,8 +36,8 @@ public class InterfaceBuilder extends AbstractBuilder {
     protected String implementation;
     protected HashSet<String> dependencies;
 
-    public InterfaceBuilder(JavaClass javaClass, String prefix, String[] excludes) throws Exception {
-        super(javaClass, prefix, excludes);
+    public InterfaceBuilder(JavaClass javaClass, String prefix, String[] excludes, String[] excludedPackages) throws Exception {
+        super(javaClass, prefix, excludes, excludedPackages);
     }
 
     @Override
@@ -46,7 +46,7 @@ public class InterfaceBuilder extends AbstractBuilder {
         if (!javaClass.isInterface())
             throw new BadParsingException("Cannot build interface from class " + javaClass.toString());
 
-        if (Utils.isExportClass(javaClass, excludes)) {
+        if (Utils.isExportClass(javaClass, excludes, excludedPackages)) {
 
             StringBuilder declBuilder = new StringBuilder();
 
@@ -87,7 +87,7 @@ public class InterfaceBuilder extends AbstractBuilder {
                     boolean found = false;
                     for (String dependency : deps) {
                         // skip method if excluded
-                        if (Utils.isClassNameExcluded(dependency, excludes)) {
+                        if (Utils.isClassNameExcluded(dependency, excludes, excludedPackages)) {
                             found = true;
                             break;
                         }

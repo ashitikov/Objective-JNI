@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package ru.objective.jni.Utils;
+package ru.objective.jni.utils;
 
 import org.apache.commons.bcel6.classfile.*;
 import org.apache.commons.bcel6.generic.ArrayType;
@@ -101,45 +101,59 @@ public class Utils {
         return result;
     }
 
-    public static boolean isClassNameExcluded(String className, String[] excludes) {
-        if (excludes == null)
-            return false;
+    public static boolean isClassNameExcluded(String className, String[] excludes, String[] packages) {
 
-        for (String excluded : excludes) {
-            if (getBasicType(className).equals(excluded))
-                return true;
+        String basicClassName = getBasicType(className);
+
+        if (excludes != null) {
+            for (String excluded : excludes) {
+                if (basicClassName.equals(excluded))
+                    return true;
+            }
+        }
+
+        if (packages != null) {
+            for (String excluded : packages) {
+                if (basicClassName.startsWith(excluded + "."))
+                    return true;
+            }
         }
 
         return false;
     }
 
-    public static boolean isExportClass(JavaClass javaClass, String[] excludes) throws ClassNotFoundException {
+    public static boolean isExportClass(JavaClass javaClass, String[] excludes, String[] excludedPackages) throws ClassNotFoundException {
         if (javaClass.isAnonymous() || javaClass.isAnnotation() || javaClass.isSynthetic())
             return false;
 
-        if (excludes == null)
-            return true;
-
-        if (isClassNameExcluded(javaClass.getClassName(), excludes))
+        if (isClassNameExcluded(javaClass.getClassName(), excludes, excludedPackages))
             return false;
 
-        JavaClass[] interfaces = javaClass.getAllInterfaces();
-        JavaClass[] supers = javaClass.getSuperClasses();
+        try {
+            JavaClass[] interfaces = javaClass.getAllInterfaces();
+            JavaClass[] supers = javaClass.getSuperClasses();
 
-        for (JavaClass superClass : supers) {
-            if (isClassNameExcluded(superClass.getClassName(), excludes))
-                return false;
-        }
+            for (JavaClass superClass : supers) {
+                if (isClassNameExcluded(superClass.getClassName(), excludes, excludedPackages))
+                    return false;
+            }
 
-        for (JavaClass superInterface : interfaces) {
-            if (isClassNameExcluded(superInterface.getClassName(), excludes))
-                return false;
+            for (JavaClass superInterface : interfaces) {
+                if (isClassNameExcluded(superInterface.getClassName(), excludes, excludedPackages))
+                    return false;
+            }
+        } catch (ClassNotFoundException cnf) {
+            System.out.println();
+            System.out.println("WARNING! One of superclass or interface of class " + javaClass.getClassName() +
+                    " does not included in classpath and will skip. Reason: " + cnf.getLocalizedMessage());
+
+            return false; // ignore classes that does not included in classpath
         }
 
         return true;
     }
 
-    public static String[] getContainedExportClasses(JarFile jarFile, String[] excludes) throws Exception {
+    public static String[] getContainedExportClasses(JarFile jarFile, String[] excludes, String[] excludedPackages) throws Exception {
         Enumeration<JarEntry> entries = jarFile.entries();
 
         ArrayList<String> containedClasses = new ArrayList<>();
@@ -153,7 +167,7 @@ public class Utils {
                 String className = getClassNameFromClassFileName(entryName);
                 JavaClass parsed = OJNIClassLoader.getInstance().loadClass(className);
 
-                if (!isExportClass(parsed, excludes))
+                if (!isExportClass(parsed, excludes, excludedPackages))
                     continue;
 
                 containedClasses.add(entryName);

@@ -20,9 +20,9 @@ import org.apache.commons.bcel6.classfile.*;
 import org.apache.commons.bcel6.generic.ArrayType;
 import org.apache.commons.bcel6.generic.Type;
 import org.apache.commons.lang3.StringUtils;
-import ru.objective.jni.Utils.MethodExportInfo;
-import ru.objective.jni.Utils.OJNIClassLoader;
-import ru.objective.jni.Utils.Utils;
+import ru.objective.jni.utils.MethodExportInfo;
+import ru.objective.jni.utils.OJNIClassLoader;
+import ru.objective.jni.utils.Utils;
 import ru.objective.jni.constants.Constants;
 import ru.objective.jni.tasks.types.PrimitiveTypeConverter;
 
@@ -35,6 +35,7 @@ public abstract class AbstractBuilder {
     protected JavaClass javaClass;
     protected String prefix;
     protected String[] excludes;
+    protected String[] excludedPackages;
 
     protected abstract void build(JavaClass javaClass) throws Exception;
 
@@ -46,10 +47,11 @@ public abstract class AbstractBuilder {
         return prefix;
     }
 
-    public AbstractBuilder(JavaClass javaClass, String prefix, String[] excludes) throws Exception {
+    public AbstractBuilder(JavaClass javaClass, String prefix, String[] excludes, String[] excludedPackages) throws Exception {
         this.javaClass = javaClass;
         this.prefix = prefix;
         this.excludes = excludes;
+        this.excludedPackages = excludedPackages;
 
         build(javaClass);
 
@@ -185,7 +187,7 @@ public abstract class AbstractBuilder {
 
             if (overloaded) {
                 overloadedParameter = "With" + (i == 0 ? StringUtils.capitalize(variable_name) : "")
-                        + Utils.getShortClassName(type);/*+ StringUtils.capitalize(Utils.getShortClassName(type));*/
+                        + Utils.getShortClassName(type);/*+ StringUtils.capitalize(utils.getShortClassName(type));*/
             }
 
             type = PrimitiveTypeConverter.convertToOBJCType(type);
@@ -266,7 +268,7 @@ public abstract class AbstractBuilder {
 
 
         if (superClassName != null && !Utils.isOBJCSystemClass(superClassName)) {
-            //result.append(Utils.getImportTemplate(getPrefix() + Utils.getShortClassName(superClassName)));
+            //result.append(utils.getImportTemplate(getPrefix() + utils.getShortClassName(superClassName)));
             importClassNames.add(superClassName);
         }
 

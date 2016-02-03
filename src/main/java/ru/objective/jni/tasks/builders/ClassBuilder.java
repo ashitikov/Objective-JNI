@@ -20,10 +20,10 @@ import org.apache.commons.bcel6.classfile.*;
 import org.apache.commons.bcel6.generic.ArrayType;
 import org.apache.commons.bcel6.generic.Type;
 import org.apache.commons.lang3.StringUtils;
-import ru.objective.jni.Utils.MethodExportInfo;
-import ru.objective.jni.Utils.OJNIClassLoader;
-import ru.objective.jni.Utils.ResourceList;
-import ru.objective.jni.Utils.Utils;
+import ru.objective.jni.utils.MethodExportInfo;
+import ru.objective.jni.utils.OJNIClassLoader;
+import ru.objective.jni.utils.ResourceList;
+import ru.objective.jni.utils.Utils;
 import ru.objective.jni.constants.Constants;
 import ru.objective.jni.exceptions.BadParsingException;
 import ru.objective.jni.tasks.types.PrimitiveTypeConverter;
@@ -40,8 +40,8 @@ public class ClassBuilder extends AbstractBuilder {
     protected String implementation;
     protected HashSet<String> dependencies;
 
-    public ClassBuilder(JavaClass javaClass, String prefix, String[] excludes) throws Exception {
-        super(javaClass, prefix, excludes);
+    public ClassBuilder(JavaClass javaClass, String prefix, String[] excludes, String[] excludedPackages) throws Exception {
+        super(javaClass, prefix, excludes, excludedPackages);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class ClassBuilder extends AbstractBuilder {
         if (javaClass.isInterface())
             throw new BadParsingException("Cannot build class from interface " + javaClass.toString());
 
-        if (Utils.isExportClass(javaClass, excludes)) {
+        if (Utils.isExportClass(javaClass, excludes, excludedPackages)) {
 
             StringBuilder declBuilder = new StringBuilder();
             StringBuilder implBuilder = new StringBuilder();
@@ -91,7 +91,7 @@ public class ClassBuilder extends AbstractBuilder {
 
             for (Field field : fields) {
                 // skip field if excluded
-                if (Utils.isClassNameExcluded(field.getType().toString(), excludes))
+                if (Utils.isClassNameExcluded(field.getType().toString(), excludes, excludedPackages))
                     continue;
 
                 String fieldName = Utils.getFieldExportName(field);
@@ -133,7 +133,7 @@ public class ClassBuilder extends AbstractBuilder {
                     boolean found = false;
                     for (String dependency : deps) {
                         // skip method if excluded
-                        if (Utils.isClassNameExcluded(dependency, excludes)) {
+                        if (Utils.isClassNameExcluded(dependency, excludes, excludedPackages)) {
                             found = true;
                             break;
                         }
@@ -175,9 +175,8 @@ public class ClassBuilder extends AbstractBuilder {
             JavaClass superClass = getSuperClass();
 
 
-            if (superClass != null && Utils.isExportClass(superClass, excludes)) {
+            if (superClass != null && Utils.isExportClass(superClass, excludes, excludedPackages)) {
                 superClassName = superClass.getClassName();
-                    //Utils.getShortClassName(superClass.getPackageName(), superClass.getClassName());
             }
 
             headerImportBlock = getHeaderImportBlock(superClassName, classInterfacesNames, dependencies, false);
