@@ -80,7 +80,7 @@ public abstract class AbstractBuilder {
 
         String returnType = Utility.signatureToString(field.getSignature());
 
-        returnType = PrimitiveTypeConverter.convertToOBJCType(Utils.getBasicType(returnType));
+        returnType = Utils.getBasicType(returnType);
 
         if (!Utils.isPrimitive(field.getType())) {
             JavaClass typeJavaClass = OJNIClassLoader.getInstance().loadClass(field.getType().toString());
@@ -93,6 +93,8 @@ public abstract class AbstractBuilder {
 
         if (Utils.isArrayType(field.getType()))
             returnType = getStringArrayType(returnType, (ArrayType)field.getType());
+        else
+            returnType = PrimitiveTypeConverter.convertToOBJCType(returnType);
 
         String declSign = (field.isStatic() ? "+" : "-")+" ";
 
@@ -136,7 +138,7 @@ public abstract class AbstractBuilder {
 
             methodReturnType = Utility.methodSignatureReturnType(method.getSignature()).toString();
 
-            methodReturnType = PrimitiveTypeConverter.convertToOBJCType(Utils.getBasicType(methodReturnType));
+            methodReturnType = Utils.getBasicType(methodReturnType);
 
             if (!Utils.isPrimitive(method.getReturnType())) {
                 JavaClass typeJavaClass = OJNIClassLoader.getInstance().loadClass(method.getReturnType().toString());
@@ -149,6 +151,8 @@ public abstract class AbstractBuilder {
 
             if (Utils.isArrayType(method.getReturnType()))
                 methodReturnType = getStringArrayType(methodReturnType, (ArrayType)method.getReturnType());
+            else
+                methodReturnType = PrimitiveTypeConverter.convertToOBJCType(methodReturnType);
         }
         stringBuilder.append((method.isStatic() ? "+" : "-")+" " + "("+PrimitiveTypeConverter.convertToOBJCType(methodReturnType)+")");
 
@@ -190,8 +194,6 @@ public abstract class AbstractBuilder {
                         + Utils.getShortClassName(type);/*+ StringUtils.capitalize(utils.getShortClassName(type));*/
             }
 
-            type = PrimitiveTypeConverter.convertToOBJCType(type);
-
             if (!Utils.isPrimitive(javaType)) {
                 JavaClass argTypeJavaClass = OJNIClassLoader.getInstance().loadClass(javaType.toString());
 
@@ -211,6 +213,8 @@ public abstract class AbstractBuilder {
                         overloadedParameter += "Array";
                 }
                 type = getStringArrayType(type, (ArrayType) javaType);
+            } else {
+                type = PrimitiveTypeConverter.convertToOBJCType(type);
             }
 
             stringBuilder.append(nameParameter + overloadedParameter + ":(" + type + ")" + variable_name + " ");

@@ -258,8 +258,7 @@ public class ClassBuilder extends AbstractBuilder {
             if (Utils.isArrayType(returnType)) {
                 ArrayType arrayType = (ArrayType)returnType;
                 int dimensions = arrayType.getDimensions();
-                String typeString = PrimitiveTypeConverter.convertToOBJCType(
-                        arrayType.getBasicType().toString());
+                String typeString = arrayType.getBasicType().toString();
                 String capitalizedType = StringUtils.capitalize(typeString);
 
                 // fix Boolean = Bool conflicts
@@ -406,8 +405,7 @@ public class ClassBuilder extends AbstractBuilder {
             if (Utils.isArrayType(type)) {
                 ArrayType arrayType = (ArrayType)type;
                 int dimensions = arrayType.getDimensions();
-                String typeString = PrimitiveTypeConverter.convertToOBJCType(
-                        arrayType.getBasicType().toString());
+                String typeString = arrayType.getBasicType().toString();
                 String capitalizedType = StringUtils.capitalize(typeString);
 
                 // fix Boolean = Bool conflicts
@@ -459,8 +457,7 @@ public class ClassBuilder extends AbstractBuilder {
         if (Utils.isArrayType(returnType)) {
             ArrayType arrReturnType = (ArrayType) returnType;
             int dimensions = arrReturnType.getDimensions();
-            String capitalizedType = StringUtils.capitalize(PrimitiveTypeConverter.convertToOBJCType(
-                    arrReturnType.getBasicType().toString()));
+            String capitalizedType = StringUtils.capitalize(arrReturnType.getBasicType().toString());
 
             // fix Boolean = Bool conflicts
             if (capitalizedType.equals("Bool"))
