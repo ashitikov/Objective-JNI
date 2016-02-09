@@ -211,7 +211,7 @@ public class DefaultTask implements ITask {
     }
 
     private JavaClass getJavaClass(String className) {
-        return OJNIClassLoader.getInstance().loadClass(className);
+        return OJNIClassLoader.getInstance().loadClass(Utils.getDottedClassName(className));
     }
 
 

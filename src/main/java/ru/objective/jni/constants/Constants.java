@@ -50,6 +50,8 @@ public final class Constants {
     public static final String TEMPLATE_FORWARD_INTERFACE_DECLARATION = "@protocol "+TEMPLATE_FORWARD_INTERFACE_DECLARATION_KEY+";";
 
     public static final String[] OCCUPIED_OBJC_WORDS = new String[] {
-            "release", "dealloc", "retainCount", "alloc", "init"
+            "release", "dealloc", "retainCount", "alloc", "init",
+            // types
+            "int", "float", "double", "short", "char", "bool", "long", "void"
     };
 }

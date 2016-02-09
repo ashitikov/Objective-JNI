@@ -164,8 +164,7 @@ public class Utils {
 
             if (!entry.isDirectory() && entryName.endsWith(Constants.CLASS_SUFFIX)) {
                 // check this is export class
-                String className = getClassNameFromClassFileName(entryName);
-                JavaClass parsed = OJNIClassLoader.getInstance().loadClass(className);
+                JavaClass parsed = OJNIClassLoader.getInstance().loadClass(entryName);
 
                 if (!isExportClass(parsed, excludes, excludedPackages))
                     continue;
@@ -185,7 +184,7 @@ public class Utils {
     }
 
     public static String getClassNameFromClassFileName(String classFileName) {
-        return getDottedClassName(classFileName).replace(".class", "");
+        return getDottedClassName(classFileName);
     }
 
     public static boolean isOccupiedWord(String word) {

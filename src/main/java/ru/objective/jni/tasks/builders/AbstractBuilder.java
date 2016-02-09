@@ -217,6 +217,10 @@ public abstract class AbstractBuilder {
                 type = PrimitiveTypeConverter.convertToOBJCType(type);
             }
 
+            if (Utils.isOccupiedWord(variable_name)){
+                variable_name = "_" + variable_name;
+            }
+
             stringBuilder.append(nameParameter + overloadedParameter + ":(" + type + ")" + variable_name + " ");
         }
 
