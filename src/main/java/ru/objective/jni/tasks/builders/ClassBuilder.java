@@ -400,6 +400,10 @@ public class ClassBuilder extends AbstractBuilder {
             if (type.equals(Type.LONG) || type.equals(Type.DOUBLE))
                 var_index++;
 
+            if (Utils.isOccupiedWord(var_name)){
+                var_name = "_" + var_name;
+            }
+
             builder.append(", ");
 
             if (Utils.isArrayType(type)) {
