@@ -202,11 +202,15 @@ public class ClassBuilder extends AbstractBuilder {
                 append("return @\"").append(slashedClassName).append("\";").append(System.lineSeparator()).
                 append("}").append(System.lineSeparator());
 
-
         // special case for string
         if (getJavaClass().getClassName().equals("java.lang.String")) {
             builder.append("- (instancetype)initWithNSString:(NSString *)string {\n" +
-                    "    return [self initWithJavaObject:[[OJNIEnv sharedEnv] newJavaStringFromString:string utf8Encoding:NO]];\n" +
+                    "    OJNIEnv *__env = [[OJNIJavaVM sharedVM] attachCurrentThread];\n" +
+                    "    OJNIJavaObject *__return = [self initWithJavaObject:[__env newJavaStringFromString:string utf8Encoding:NO]];\n" +
+                    "    \n" +
+                    "    [[OJNIJavaVM sharedVM] detachCurrentThread:__env];\n" +
+                    "    \n" +
+                    "    return __return;\n" +
                     "}\n" +
                     "\n" +
                     "+ (instancetype)stringWithNSString:(NSString *)string {\n" +
@@ -214,7 +218,12 @@ public class ClassBuilder extends AbstractBuilder {
                     "}\n" +
                     "\n" +
                     "- (NSString *)toNSString {\n" +
-                    "    return [[OJNIEnv sharedEnv] newStringFromJavaString:[self javaObject] utf8Encoding:NO];\n" +
+                    "    OJNIEnv *__env = [[OJNIJavaVM sharedVM] attachCurrentThread];\n" +
+                    "    OJNIJavaObject *__return = [__env newStringFromJavaString:[self javaObject] utf8Encoding:NO];\n" +
+                    "    \n" +
+                    "    [[OJNIJavaVM sharedVM] detachCurrentThread:__env];\n" +
+                    "    \n" +
+                    "    return __return;\n" +
                     "}");
         }
 
@@ -229,6 +238,7 @@ public class ClassBuilder extends AbstractBuilder {
 
         builder.append(declaration).append(" {").append(System.lineSeparator());
 
+        builder.append("OJNIEnv *__env = [[OJNIJavaVM sharedVM] attachCurrentThread];").append(System.lineSeparator());
         builder.append("jfieldID fid = [[OJNIMidManager sharedManager] fieldIDFor");
         if (field.isStatic())
             builder.append("Static");
@@ -250,7 +260,7 @@ public class ClassBuilder extends AbstractBuilder {
         }
 
         if (setter) { // setter
-            builder.append("[[OJNIEnv sharedEnv] set").append(staticIdentifier).append(capitalized).
+            builder.append("[__env set").append(staticIdentifier).append(capitalized).
                     append("Field:").append(selfIdentitifer).append(" field:fid value:");
 
             String var_name = "property_" + field.getName();
@@ -266,10 +276,10 @@ public class ClassBuilder extends AbstractBuilder {
                     capitalizedType = "Boolean";
 
                 if (arrayType.getDimensions() == 1 && Utils.isPrimitive(arrayType)) {
-                    builder.append("[[OJNIEnv sharedEnv] newJava").append(capitalizedType).append("ArrayFromArray:").append(var_name).append("]");
+                    builder.append("[__env newJava").append(capitalizedType).append("ArrayFromArray:").append(var_name).append("]");
                 } else {
                     if (Utils.isPrimitive(arrayType)) {
-                        builder.append("[[OJNIEnv sharedEnv] newJavaObjectArrayFromArray:").
+                        builder.append("[__env newJavaObjectArrayFromArray:").
                                 append(var_name).append(" baseClass:[OJNIPrimitive").append(capitalizedType).
                                 append("Array class]").
                                 append(" dimensions:").append(dimensions).append("]");
@@ -283,7 +293,7 @@ public class ClassBuilder extends AbstractBuilder {
                         else
                             resultClassString = "[" + getPrefix() + Utils.getShortClassName(typeString) + " class]";
 
-                        builder.append("[[OJNIEnv sharedEnv] newJavaObjectArrayFromArray:").
+                        builder.append("[__env newJavaObjectArrayFromArray:").
                                 append(var_name).append(" baseClass:").
                                 append(resultClassString).
                                 append(" dimensions:").append(dimensions).append("]");
@@ -299,7 +309,7 @@ public class ClassBuilder extends AbstractBuilder {
             builder.append("];");
         } else { // getter
             builder.append("j").append(lowerCaseReturnType).append(" __obj = ").
-                    append("[[OJNIEnv sharedEnv] get").append(staticIdentifier).append(capitalized).
+                    append("[__env get").append(staticIdentifier).append(capitalized).
                     append("Field:").append(selfIdentitifer).append(" field:fid];").append(System.lineSeparator());
 
             builder.append(generateReturnObject(field.getType()));
@@ -317,6 +327,7 @@ public class ClassBuilder extends AbstractBuilder {
 
         builder.append(declaration).append(" {").append(System.lineSeparator());
 
+        builder.append("OJNIEnv *__env = [[OJNIJavaVM sharedVM] attachCurrentThread];").append(System.lineSeparator());
         builder.append("jmethodID mid = [[OJNIMidManager sharedManager] methodIDFor");
         if (method.isStatic())
             builder.append("Static");
@@ -324,17 +335,18 @@ public class ClassBuilder extends AbstractBuilder {
         builder.append("signature:@\""+method.getSignature()+"\" inClass:self.class];");
         builder.append(System.lineSeparator());
 
+        // todo remove [self.class OJNIClass];
         if (method.getReturnType().equals(Type.VOID)) {
             if (Utils.isConstructor(method)) {
-                builder.append("jobject __obj = [[OJNIEnv sharedEnv] newObject:[self.class OJNIClass] method:mid");
+                builder.append("jobject __obj = [__env newObject:[self.class OJNIClass] method:mid");
                 builder.append(vars).append("];").append(System.lineSeparator());
                 builder.append("return [super initWithJavaObject:__obj];");
 
             } else {
                 if (method.isStatic()) {
-                    builder.append("[[OJNIEnv sharedEnv] callStaticVoidMethodOnClass:[self.class OJNIClass] method:mid");
+                    builder.append("[__env callStaticVoidMethodOnClass:[self.class OJNIClass] method:mid");
                 } else {
-                    builder.append("[[OJNIEnv sharedEnv] callVoidMethodOnObject:[self javaObject] method:mid");
+                    builder.append("[__env callVoidMethodOnObject:[self javaObject] method:mid");
                 }
 
                 builder.append(vars).append("];");
@@ -356,11 +368,11 @@ public class ClassBuilder extends AbstractBuilder {
 
         if (Utils.isArrayType(returnType) || !Utils.isPrimitive(returnType)) {
             if (method.isStatic())
-                builder.append("jobject __obj = [[OJNIEnv sharedEnv] callStaticObject");
+                builder.append("jobject __obj = [__env callStaticObject");
             else
-                builder.append("jobject __obj = [[OJNIEnv sharedEnv] callObject");
+                builder.append("jobject __obj = [__env callObject");
         } else {
-            builder.append("j").append(returnType.toString()).append(" __obj = [[OJNIEnv sharedEnv] call");
+            builder.append("j").append(returnType.toString()).append(" __obj = [__env call");
             if (method.isStatic())
                 builder.append("Static");
             builder.append(StringUtils.capitalize(returnType.toString()));
@@ -418,10 +430,10 @@ public class ClassBuilder extends AbstractBuilder {
 
                 if (arrayType.getDimensions() == 1 && Utils.isPrimitive(arrayType)) {
                     //builder.append("[").append(var_name).append(" rawArray]");
-                    builder.append("[[OJNIEnv sharedEnv] newJava").append(capitalizedType).append("ArrayFromArray:").append(var_name).append("]");
+                    builder.append("[__env newJava").append(capitalizedType).append("ArrayFromArray:").append(var_name).append("]");
                 } else {
                     if (Utils.isPrimitive(arrayType)) {
-                        builder.append("[[OJNIEnv sharedEnv] newJavaObjectArrayFromArray:").
+                        builder.append("[__env newJavaObjectArrayFromArray:").
                                 append(var_name).append(" baseClass:[OJNIPrimitive").append(capitalizedType).
                                 append("Array class]").
                                 append(" dimensions:").append(dimensions).append("]");
@@ -435,7 +447,7 @@ public class ClassBuilder extends AbstractBuilder {
                         else
                             resultClassString = "[" + getPrefix() + Utils.getShortClassName(typeString) + " class]";
 
-                        builder.append("[[OJNIEnv sharedEnv] newJavaObjectArrayFromArray:").
+                        builder.append("[__env newJavaObjectArrayFromArray:").
                                 append(var_name).append(" baseClass:").
                                 append(resultClassString).
                                 append(" dimensions:").append(dimensions).append("]");
@@ -456,8 +468,6 @@ public class ClassBuilder extends AbstractBuilder {
     public String generateReturnObject(Type returnType) {
         StringBuilder builder = new StringBuilder();
 
-        builder.append("return ");
-
         if (Utils.isArrayType(returnType)) {
             ArrayType arrReturnType = (ArrayType) returnType;
             int dimensions = arrReturnType.getDimensions();
@@ -469,28 +479,38 @@ public class ClassBuilder extends AbstractBuilder {
 
             if (Utils.isPrimitive(arrReturnType)) {
                 if (dimensions == 1) {
-                    builder.append("[[OJNIEnv sharedEnv] primitive").
+                    builder.append("OJNIPrimitiveArray *__return = ");
+                    builder.append("[__env primitive").
                             append(capitalizedType).
                             append("ArrayFromJavaArray:__obj];");
                 } else {
-                    builder.append("[[OJNIEnv sharedEnv] newArrayFromJavaObjectArray:__obj baseClass:[OJNIPrimitive").
+                    builder.append("NSArray *__return = ");
+                    builder.append("[__env newArrayFromJavaObjectArray:__obj baseClass:[OJNIPrimitive").
                             append(capitalizedType).
                             append("Array class] classPrefix:@\"").append(getPrefix()).
                             append("\" dimensions:").append(dimensions).append("];");
                 }
             } else {
-                builder.append("[[OJNIEnv sharedEnv] newArrayFromJavaObjectArray:__obj baseClass:[OJNIJavaObject class] classPrefix:@\"").
+                builder.append("NSArray *__return = ");
+                builder.append("[__env newArrayFromJavaObjectArray:__obj baseClass:[OJNIJavaObject class] classPrefix:@\"").
                         append(getPrefix()).append("\" dimensions:").append(dimensions).append("];");
             }
         } else {
             if (Utils.isPrimitive(returnType)) {
+                builder.append(PrimitiveTypeConverter.convertToOBJCType(returnType.toString())).append(" __return = ");
                 builder.append("__obj;");
             } else {
+                builder.append("OJNIJavaObject *__return = ");
                 builder.append("[OJNIJavaObject retrieveFromJavaObject:__obj classPrefix:@\"").
                         append(getPrefix()).
                         append("\"];");
             }
         }
+
+        builder.append(System.lineSeparator()).
+                append("[[OJNIJavaVM sharedVM] detachCurrentThread:__env];").
+                append(System.lineSeparator()).
+                append("return __return;");
 
         return builder.toString();
     }
