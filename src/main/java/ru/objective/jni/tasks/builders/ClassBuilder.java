@@ -205,10 +205,8 @@ public class ClassBuilder extends AbstractBuilder {
         // special case for string
         if (getJavaClass().getClassName().equals("java.lang.String")) {
             builder.append("- (instancetype)initWithNSString:(NSString *)string {\n" +
-                    "    OJNIEnv *__env = [[OJNIJavaVM sharedVM] attachCurrentThread];\n" +
+                    "    OJNIEnv *__env = [OJNIEnv currentEnv];\n" +
                     "    OJNIJavaObject *__return = [self initWithJavaObject:[__env newJavaStringFromString:string utf8Encoding:NO]];\n" +
-                    "    \n" +
-                    "    [[OJNIJavaVM sharedVM] detachCurrentThread:__env];\n" +
                     "    \n" +
                     "    return __return;\n" +
                     "}\n" +
@@ -218,10 +216,8 @@ public class ClassBuilder extends AbstractBuilder {
                     "}\n" +
                     "\n" +
                     "- (NSString *)toNSString {\n" +
-                    "    OJNIEnv *__env = [[OJNIJavaVM sharedVM] attachCurrentThread];\n" +
-                    "    OJNIJavaObject *__return = [__env newStringFromJavaString:[self javaObject] utf8Encoding:NO];\n" +
-                    "    \n" +
-                    "    [[OJNIJavaVM sharedVM] detachCurrentThread:__env];\n" +
+                    "    OJNIEnv *__env = [OJNIEnv currentEnv];\n" +
+                    "    NSString *__return = [__env newStringFromJavaString:[self javaObject] utf8Encoding:NO];\n" +
                     "    \n" +
                     "    return __return;\n" +
                     "}");
@@ -238,7 +234,7 @@ public class ClassBuilder extends AbstractBuilder {
 
         builder.append(declaration).append(" {").append(System.lineSeparator());
 
-        builder.append("OJNIEnv *__env = [[OJNIJavaVM sharedVM] attachCurrentThread];").append(System.lineSeparator());
+        builder.append("OJNIEnv *__env = [OJNIEnv currentEnv];").append(System.lineSeparator());
         builder.append("jfieldID fid = [[OJNIMidManager sharedManager] fieldIDFor");
         if (field.isStatic())
             builder.append("Static");
@@ -327,7 +323,7 @@ public class ClassBuilder extends AbstractBuilder {
 
         builder.append(declaration).append(" {").append(System.lineSeparator());
 
-        builder.append("OJNIEnv *__env = [[OJNIJavaVM sharedVM] attachCurrentThread];").append(System.lineSeparator());
+        builder.append("OJNIEnv *__env = [OJNIEnv currentEnv];").append(System.lineSeparator());
         builder.append("jmethodID mid = [[OJNIMidManager sharedManager] methodIDFor");
         if (method.isStatic())
             builder.append("Static");
@@ -500,7 +496,7 @@ public class ClassBuilder extends AbstractBuilder {
                 builder.append(PrimitiveTypeConverter.convertToOBJCType(returnType.toString())).append(" __return = ");
                 builder.append("__obj;");
             } else {
-                builder.append("OJNIJavaObject *__return = ");
+                builder.append("id __return = ");
                 builder.append("[OJNIJavaObject retrieveFromJavaObject:__obj classPrefix:@\"").
                         append(getPrefix()).
                         append("\"];");
@@ -508,8 +504,6 @@ public class ClassBuilder extends AbstractBuilder {
         }
 
         builder.append(System.lineSeparator()).
-                append("[[OJNIJavaVM sharedVM] detachCurrentThread:__env];").
-                append(System.lineSeparator()).
                 append("return __return;");
 
         return builder.toString();
